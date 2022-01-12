@@ -1,0 +1,53 @@
+
+Question 2: SQL Challenge 
+
+a. How many orders were shipped by Speedy Express in total?
+
+    query : 
+    SELECT COUNT(*) AS "Number of Orders by Speedy Express" 
+        FROM Orders o
+        LEFT JOIN Shippers sh
+        ON sh.ShipperID == o.ShipperID
+        WHERE 
+        ShipperName == 'Speedy Express'
+
+    Answer: 54
+
+b. What is the last name of the employee with the most orders?
+
+    query:
+    SELECT LastName
+   	FROM (
+        SELECT MAX(COUNT_OF_ORDERS), LastName
+        FROM (
+            SELECT  Count(O.OrderID) AS "COUNT_OF_ORDERS",  LastName
+            FROM Orders o
+            JOIN Employees em
+            ON em.employeeID == o.employeeID
+            GROUP BY em.EmployeeID))
+
+        
+    Answer: Peacock
+
+c. What product was ordered the most by customers in Germany?
+
+    query: 
+       SELECT  ProductName
+   	FROM (
+     SELECT MAX(COUNT_OF_ORDERS), ProductName
+     FROM (
+          SELECT  Count(o.OrderID) AS "COUNT_OF_ORDERS", p.ProductName
+          FROM Orders o
+          JOIN Customers cm
+          ON cm.CustomerID == o.CustomerID
+          JOIN OrderDetails od
+          ON od.OrderID == o.OrderID
+          JOIN Products p
+          ON p.ProductID == od.ProductID
+          WHERE cm.Country == "Germany"
+          GROUP BY p.ProductName))
+
+
+    
+    Answer: Gorgonzola Telino
+
