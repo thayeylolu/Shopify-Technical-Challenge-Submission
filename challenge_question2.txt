@@ -1,35 +1,55 @@
 
 Question 2: SQL Challenge 
 
+# While doing this challenge I observed that `sql tyr editor` 
+# works differently on Chrome and Safari. 
+
 a. How many orders were shipped by Speedy Express in total?
+
+Process: I left joined the Shippers table with the Orders table on ShipperID
+        then filtered for shippername "Speedy Express". I retrieved the count for 
+        the number of orders made using the Speedy Express.
 
     query : 
     SELECT COUNT(*) AS "Number of Orders by Speedy Express" 
         FROM Orders o
-        LEFT JOIN Shippers sh
-        ON sh.ShipperID == o.ShipperID
+        JOIN Shippers sh
+        ON sh.ShipperID = o.ShipperID
         WHERE 
-        ShipperName == 'Speedy Express'
+        ShipperName = 'Speedy Express'
 
     Answer: 54
 
 b. What is the last name of the employee with the most orders?
+
+Process: For this task I didn't want to use the LIMIT clause.
+        I used subqueries to retrieve the last name by joining on
+        the Orders and Employees tables to get a last name and "count of 
+        the Orders made". I grouped them by lastname. I was able to retrieve the maximum
+        orders made and lastname. I did a last subquery to retrieve the lastname
 
     query:
     SELECT LastName
    	FROM (
         SELECT MAX(COUNT_OF_ORDERS), LastName
         FROM (
-            SELECT  Count(O.OrderID) AS "COUNT_OF_ORDERS",  LastName
+            SELECT  Count(O.OrderID) AS "COUNT_OF_ORDERS",  em.LastName
             FROM Orders o
             JOIN Employees em
-            ON em.employeeID == o.employeeID
-            GROUP BY em.EmployeeID))
+            ON em.employeeID = o.employeeID
+            GROUP BY em.LastName))
 
         
     Answer: Peacock
 
 c. What product was ordered the most by customers in Germany?
+
+Process: For this task I also didn't want to use the LIMIT clause.
+        I used subqueries to retrieve the last name by joining on
+        the Orders,Cusotmers,OrderDetails and Product tables 
+        to get a last name , filter by country name "Germany", and "count of the Orders
+        made". I grouped them by ProductID. I was able to retrieve the maximum
+        orders made and productname. I did a last subquery to retrieve the productname
 
     query: 
        SELECT  ProductName
@@ -39,15 +59,13 @@ c. What product was ordered the most by customers in Germany?
           SELECT  Count(o.OrderID) AS "COUNT_OF_ORDERS", p.ProductName
           FROM Orders o
           JOIN Customers cm
-          ON cm.CustomerID == o.CustomerID
+          ON cm.CustomerID = o.CustomerID
           JOIN OrderDetails od
-          ON od.OrderID == o.OrderID
+          ON od.OrderID = o.OrderID
           JOIN Products p
-          ON p.ProductID == od.ProductID
-          WHERE cm.Country == "Germany"
+          ON p.ProductID = od.ProductID
+          WHERE cm.Country = "Germany"
           GROUP BY p.ProductName))
-
-
     
     Answer: Gorgonzola Telino
 
