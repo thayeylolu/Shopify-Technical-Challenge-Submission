@@ -1,0 +1,75 @@
+---
+title: "Shopify  Data science Challenge"
+author: "Taiwo Owoseni"
+date: "May 9th 2022"
+output:
+  pdf_document: default
+  html_notebook: default
+subtitle: SQL
+---
+
+### Questions
+
+-   How many orders were shipped by Speedy Express in total?
+
+-   What is the last name of the employee with the most orders?
+
+-   What product was ordered the most by customers in Germany?
+
+#### Question 1
+
+How many orders were shipped by Speedy Express in total?
+
+```sql
+SELECT COUNT(*) as 'noOfOrders'
+FROM Shippers sh
+JOIN  Orders o
+ON o.ShipperID = sh.ShipperID
+WHERE sh.ShipperName = 'Speedy Express';
+```
+
+**Query Result: 54**
+
+
+------------------------------------------------------------------------
+
+#### Question 2
+
+What is the last name of the employee with the most orders?
+
+```sql
+/* last name of the employee with the most orders?  */
+
+SELECT e.LastName, COUNT(o.OrderID) as "NoOfOrder"
+FROM Orders o, Employees e
+WHERE o.EmployeeID = e.EmployeeID
+GROUP BY e.EmployeeID
+ORDER BY COUNT(*) DESC
+LIMIT 1;
+```
+
+**Query Result : Peacock**\
+
+------------------------------------------------------------------------
+
+#### Question 3
+
+What product was ordered the most by customers in Germany?
+
+```sql
+
+/* highest quantity of product German Orders  */
+
+SELECT p.ProductName, SUM(od.Quantity) as "SumOfQuantity"
+FROM Products p, OrderDetails od, Orders o, Customers c
+WHERE p.ProductID = Od.ProductID
+AND od.OrderID = o.OrderID
+AND o.CustomerID = c.CustomerID
+GROUP BY c.Country, p.ProductName
+HAVING c.Country = 'Germany'
+ORDER BY SUM(od.Quantity) DESC
+LIMIT 1;
+
+```
+
+**Query Result : Boston Crab Meat**
