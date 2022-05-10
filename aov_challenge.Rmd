@@ -28,7 +28,7 @@ On Shopify, we have exactly 100 sneaker shops, and each of these shops sells onl
 
 -   **Observe AOV vary in 30-days**
 
--   **Try other metric:** Customer retention
+-   **Try other metric:** Customer retention?
 
 ### **Load Libraries and Data**
 
@@ -46,6 +46,8 @@ library(dplyr)
 library(MASS)
 library(ggrepel)
 library(binom)
+library(cohorts)
+library(lubridate)
 
 data <- read_csv("data/data.csv")
 
@@ -151,8 +153,11 @@ In other to understand if AOV is a great metric; I will look at how it varied in
 
 Te time series for the AOV shows a spike in sells for the Beginning and **end** of the month. For the rest of the month, the spike is somewhat consistent.
 
-```{r}
+```{r time-seires-data}
 data$created_at <-as.Date(data$created_at)
+
+#data$date <- as.Date(mdy_hms(data$created_at))
+data$date <- as.Date(data$created_at, "%Y%m%d")
 
 aov_data_mth <- data |>
   group_by(created_at)|>
@@ -160,15 +165,21 @@ aov_data_mth <- data |>
 
  ggplot(aov_data_mth, aes(x= created_at, y= aov)) +
   geom_line() + 
-  xlab('Time Created')
+  xlab('Time Created') + 
+  ggtitle('TIme Series AOV: With Outliers') + 
+  xlab('Payment Types') + 
+  ylab('Average Order Value')
 ```
 
 **Data with outlier : data_out**
 
 The time series for the AOV for the data without outlier shows a spike in AOV for the middle of the month. This is opposite of the first time series (one with outliers). In Beginning and **end** of the month, their is a decline ni AOV.
 
-```{r}
+```{r time-seires-data-out}
+
 data_out$created_at <-as.Date(data_out$created_at)
+
+data_out$date <- as.Date(data_out$created_at, "%Y%m%d")
 
 aov_data_mth_out <- data_out |>
   group_by(created_at)|>
@@ -176,9 +187,39 @@ aov_data_mth_out <- data_out |>
 
  ggplot(aov_data_mth_out, aes(x= created_at, y= aov)) +
   geom_line() + 
-  xlab('Time Created')
+  xlab('Time Created') + 
+  ggtitle('TIme Series AOV: Without Outliers') + 
+  xlab('Payment Types') + 
+  ylab('Average Order Value')
 ```
 
 -   AOV only shows growth in a specific time period. This isn't a great metric. It' very possible that the outliers in the data are not as a result of data entry error. Some stores might be owned by a celebrity and people would love to buy from them. Hence the high order amount.
 
--   What Should matter to the store is if they are able to retain customers. Given the time period of the data set, it would be diffcult to calculate customer retention.
+-   What Should matter to the store is if they are able to retain customers. Given the time period of the data set, it would be difficult to calculate customer retention.
+
+General Cohort Analysis
+
+```{r cohort-analysis}
+
+cohort_days <- data %>%
+  cohort_table_day(user_id, date)%>%
+shift_left_pct() %>%
+   pivot_longer(-cohort) %>%
+   mutate(time = as.numeric(str_remove(name,"t")))
+cohort_days
+```
+
+```{r}
+cohort_days[cohort_days == 0] <- NA
+
+cohort_days%>%
+  filter(cohort <= 7, time > 0, value > 0) %>%
+  ggplot(aes(time, value, color = cohort)) +
+  geom_line(size = 1) +
+  geom_point(size = 1) +
+  facet_wrap(~cohort) +
+  xlab('Days in March') +
+  ylab('Retention Ratew in percent') +
+  ggtitle('Retention rate over Time')
+
+```
