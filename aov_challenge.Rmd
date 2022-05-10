@@ -26,4 +26,18 @@ On Shopify, we have exactly 100 sneaker shops, and each of these shops sells onl
 
 ### Approach
 
--   Investigating
+*Here are the list of steps I intend to use to evaluate if the AOV is a good measurement or not:*
+
+-   **Investigating the data set** : Look for outliers and Visually understand the data
+
+-   **Better way to evaluate the data** : Apply Monte Carol to simulate the more than 100 dataset (10,000 in stead)
+
+-   **Try other metric:** CLV
+
+-   **Compare the metrics using Hypothesis** : ANOVA or Repeated Measures Analysis
+
+### **Load Data**
+
+```{r}
+
+```
