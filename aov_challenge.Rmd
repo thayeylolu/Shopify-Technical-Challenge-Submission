@@ -8,13 +8,9 @@ output:
 subtitle: AOV 
 ---
 
-```{r}
-plot(cars)
-```
-
 ### **Question**
 
-Given some sample data, write a program to answer the following:[ click here to access the required data set](https://docs.google.com/spreadsheets/d/16i38oonuX1y1g7C_UAmiK9GkY7cS-64DfiDMNiR41LM/edit#gid=0)
+Given some sample data, write a program to answer the following:[click here to access the required data set](https://docs.google.com/spreadsheets/d/16i38oonuX1y1g7C_UAmiK9GkY7cS-64DfiDMNiR41LM/edit#gid=0)
 
 On Shopify, we have exactly 100 sneaker shops, and each of these shops sells only one model of shoe. We want to do some analysis of the average order value (AOV). When we look at orders data over a 30 day window, we naively calculate an AOV of \$3145.13. Given that we know these shops are selling sneakers, a relatively affordable item, something seems wrong with our analysis. 
 
@@ -28,16 +24,150 @@ On Shopify, we have exactly 100 sneaker shops, and each of these shops sells onl
 
 *Here are the list of steps I intend to use to evaluate if the AOV is a good measurement or not:*
 
--   **Investigating the data set** : Look for outliers and Visually understand the data
+-   **Investigating the data set** : and Visually understand the data and Look for outliers.
 
--   **Better way to evaluate the data** : Apply Monte Carol to simulate the more than 100 dataset (10,000 in stead)
+-   H**ow Does the AOV vary in 30-days**
 
 -   **Try other metric:** CLV
 
 -   **Compare the metrics using Hypothesis** : ANOVA or Repeated Measures Analysis
 
-### **Load Data**
+### **Load Libraries and Data**
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+library(tools)
+library(scales)
+library(broom)
+library(MASS)
+library(rmarkdown)
+library(dplyr)
+library(MASS)
+library(ggrepel)
+library(binom)
+
+data <- read_csv("data/data.csv")
+
+```
+
+```{r view_data}
+head(data)
+```
+
+### **Investigating the data set**
+
+#### Unit cost : Diensity Plot
+
+-   $$ \text{Calculate unit cost} = \frac{\text{Order Amount}}{\text{Total Items}}$$
+
+-   $$   \text{AOV} = \frac{\text{Summed Order Amount}}{\text{Number of Orders}}$$
+
+```{r naive-aov}
+AOV <- sum(data$order_amount)/ nrow(data)
+AOV
+```
+
+```{r unit cost}
+data$unit_cost <- data$order_amount/ data$total_items
+
+```
+
+**Expectation**: I expect that the distribution of **unit_co**st is not skewed . My assumption is from the question **"the stores sell the same kind of sneakers**" .
+
+**Result:** The plot below proves that the shops are not selling the sneakers at the an normally distributed price. The plot is right skewed. This indicates presence of outliers in the data. I will plot a box plot to see these outliers in the different payment method.
 
 ```{r}
+data |>
+   ggplot(aes(x= unit_cost)) +
+  geom_density(color="darkblue", fill="lightblue") +
+  ggtitle('Distribution of Unit cost ')
+```
 
+#### Box Plot : Payment Method
+
+Visually, there are outliers in the data. The box of the box plot are closer to the 0 unit cost.
+
+```{r box-plot}
+
+data |>
+ ggplot(aes(x= payment_method , y= unit_cost)) + 
+  geom_boxplot()
+
+```
+
+#### Removing Outliers
+
+```{r remove-outliers }
+outliers <- boxplot(data$unit_cost, plot = FALSE)$out
+paste0("NUmbers of Outliers: ",  length(outliers))
+data_out <- data[!(data$unit_cost %in% outliers), ]
+```
+
+I will repeat the two plot to see if removing outliers has an effect on **unit cost**, hence effect on **AOV.**
+
+Observation: There peaks in the distributions. This could indicate different groups stores in the data. The boxplot looks great.
+
+```{r no-outlier-density}
+data_out |>
+   ggplot(aes(x= unit_cost)) +
+  geom_density(color="darkblue", fill="lightblue") +
+  ggtitle('Distribution of Unit cost ')
+```
+
+```{r no-outlier-box-plot}
+
+data_out |>
+ ggplot(aes(x= payment_method , y= unit_cost)) + 
+  geom_boxplot()
+
+```
+
+#### Calculate AOV after Outlier removal 
+
+The AOV drastically reduced from 3,145 to 300 dollars.
+
+```{r no-outlier-aov}
+AOV_no_outlier <- sum(data_out$order_amount)/ nrow(data_out)
+AOV_no_outlier
+```
+
+#### H**ow Does the AOV vary in 30-days**
+
+In other to understand if AOV is a great metric; I will look at how it varied in during the month in two cases:
+
+-   Data with outlier : data
+
+-   Data without outlier :data_out
+
+**Data with outlier : data**
+
+From the gra
+
+```{r}
+data$created_at <-as.Date(data$created_at)
+
+aov_data_mth <- data |>
+  group_by(created_at)|>
+  summarize( aov = sum(order_amount)/n())
+
+ ggplot(aov_data_mth, aes(x= created_at, y= aov)) +
+  geom_line() + 
+  xlab('Time Created')
+```
+
+**Data with outlier : data**
+
+```{r}
+data_out$created_at <-as.Date(data_out$created_at)
+
+aov_data_mth_out <- data_out |>
+  group_by(created_at)|>
+  summarize( aov = sum(order_amount)/n())
+
+ ggplot(aov_data_mth_out, aes(x= created_at, y= aov)) +
+  geom_line() + 
+  xlab('Time Created')
 ```
