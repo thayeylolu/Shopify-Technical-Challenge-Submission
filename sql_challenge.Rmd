@@ -20,8 +20,8 @@ subtitle: SQL
 
 How many orders were shipped by Speedy Express in total?
 
-``` sql
-SELECT COUNT(*) as 'number of orders: '
+```sql
+SELECT COUNT(*) as 'noOfOrders'
 FROM Shippers sh
 JOIN  Orders o
 ON o.ShipperID = sh.ShipperID
@@ -30,7 +30,6 @@ WHERE sh.ShipperName = 'Speedy Express';
 
 **Query Result: 54**
 
-\
 
 ------------------------------------------------------------------------
 
@@ -38,26 +37,15 @@ WHERE sh.ShipperName = 'Speedy Express';
 
 What is the last name of the employee with the most orders?
 
-``` sql
-/* create the view seperately */
+```sql
+/* last name of the employee with the most orders?  */
 
-CREATE VIEW count_orders_view AS
-SELECT e.EmployeeID, Count(o.OrderID) as "no_order"
-FROM Employees e
-JOIN Orders o
-ON e.EmployeeID = o.EmployeeID
+SELECT e.LastName, COUNT(o.OrderID) as "NoOfOrder"
+FROM Orders o, Employees e
+WHERE o.EmployeeID = e.EmployeeID
 GROUP BY e.EmployeeID
-ORDER BY "no_order" DESC
+ORDER BY COUNT(*) DESC
 LIMIT 1;
-```
-
-``` sql
-/* get Employee's LastName */
-
-SELECT e.LastName
-FROM Employees e,
-count_orders_view v
-WHERE v.EmployeeID = e.EmployeeID;
 ```
 
 **Query Result : Peacock**\
@@ -68,37 +56,20 @@ WHERE v.EmployeeID = e.EmployeeID;
 
 What product was ordered the most by customers in Germany?
 
-``` sql
-/* All German Orders  */
+```sql
 
-CREATE view german_orders_view AS
+/* highest quantity of product German Orders  */
 
-SELECT o.OrderID
-FROM Orders o
-JOIN Customers c
-ON o.CustomerID = c.CustomerID
-WHERE c.Country = 'Germany';
-```
-
-``` sql
-/* productID ordered the most in Germany */
-
-CREATE VIEW prod_bought_in_germany_view AS 
-
-SELECT ProductID
-FROM OrderDetails
-WHERE orderID IN (SELECT orderID from german_orders_view)
-GROUP BY ProductID
-ORDER BY COUNT(orderID) DESC
+SELECT p.ProductName, SUM(od.Quantity) as "SumOfQuantity"
+FROM Products p, OrderDetails od, Orders o, Customers c
+WHERE p.ProductID = Od.ProductID
+AND od.OrderID = o.OrderID
+AND o.CustomerID = c.CustomerID
+GROUP BY c.Country, p.ProductName
+HAVING c.Country = 'Germany'
+ORDER BY SUM(od.Quantity) DESC
 LIMIT 1;
+
 ```
 
-``` sql
-/* productName ordered the most in Germany */
-
-SELECT p.ProductName
-FROM Products p, prod_bought_in_germany_view pbg
-WHERE pbg.ProductID = p.ProductID;
-```
-
-**Query Result : Gorgonzola Telino**
+**Query Result : Boston Crab Meat**
