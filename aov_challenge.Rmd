@@ -16,7 +16,7 @@ On Shopify, we have exactly 100 sneaker shops, and each of these shops sells onl
 
 1.  Think about what could be going wrong with our calculation. Think about a better way to evaluate this data. 
 
-2.  What metric would you report for this dataset?
+2.  What metric would you report for this data set?
 
 3.  What is its value?
 
@@ -26,11 +26,9 @@ On Shopify, we have exactly 100 sneaker shops, and each of these shops sells onl
 
 -   **Investigating the data set** : and Visually understand the data and Look for outliers.
 
--   H**ow Does the AOV vary in 30-days**
+-   **Observe AOV vary in 30-days**
 
--   **Try other metric:** CLV
-
--   **Compare the metrics using Hypothesis** : ANOVA or Repeated Measures Analysis
+-   **Try other metric:** Customer retention
 
 ### **Load Libraries and Data**
 
@@ -94,8 +92,10 @@ Visually, there are outliers in the data. The box of the box plot are closer to 
 
 data |>
  ggplot(aes(x= payment_method , y= unit_cost)) + 
-  geom_boxplot()
-
+  geom_boxplot() + 
+  ggtitle('Box plot of Payment types') + 
+  xlab('Payment Types') + 
+  ylab('Unit COst of Sneakers')
 ```
 
 #### Removing Outliers
@@ -114,15 +114,20 @@ Observation: There peaks in the distributions. This could indicate different gro
 data_out |>
    ggplot(aes(x= unit_cost)) +
   geom_density(color="darkblue", fill="lightblue") +
-  ggtitle('Distribution of Unit cost ')
+  ggtitle('Distribution of Unit cost: Without Outliers ') +
+
+  ylab('Density') + 
+ xlab('Unit Cost of Sneakers')
 ```
 
 ```{r no-outlier-box-plot}
 
 data_out |>
  ggplot(aes(x= payment_method , y= unit_cost)) + 
-  geom_boxplot()
-
+  geom_boxplot() +
+  ggtitle('Box plot of Payment types: Without Outliers') + 
+  xlab('Payment Types') + 
+  ylab('Unit Cost of Sneakers')
 ```
 
 #### Calculate AOV after Outlier removal 
@@ -144,7 +149,7 @@ In other to understand if AOV is a great metric; I will look at how it varied in
 
 **Data with outlier : data**
 
-From the gra
+Te time series for the AOV shows a spike in sells for the Beginning and **end** of the month. For the rest of the month, the spike is somewhat consistent.
 
 ```{r}
 data$created_at <-as.Date(data$created_at)
@@ -158,7 +163,9 @@ aov_data_mth <- data |>
   xlab('Time Created')
 ```
 
-**Data with outlier : data**
+**Data with outlier : data_out**
+
+The time series for the AOV for the data without outlier shows a spike in AOV for the middle of the month. This is opposite of the first time series (one with outliers). In Beginning and **end** of the month, their is a decline ni AOV.
 
 ```{r}
 data_out$created_at <-as.Date(data_out$created_at)
@@ -171,3 +178,7 @@ aov_data_mth_out <- data_out |>
   geom_line() + 
   xlab('Time Created')
 ```
+
+-   AOV only shows growth in a specific time period. This isn't a great metric. It' very possible that the outliers in the data are not as a result of data entry error. Some stores might be owned by a celebrity and people would love to buy from them. Hence the high order amount.
+
+-   What Should matter to the store is if they are able to retain customers. Given the time period of the data set, it would be diffcult to calculate customer retention.
