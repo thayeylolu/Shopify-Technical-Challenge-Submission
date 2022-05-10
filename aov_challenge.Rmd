@@ -24,9 +24,9 @@ On Shopify, we have exactly 100 sneaker shops, and each of these shops sells onl
 
 *Here are the list of steps I intend to use to evaluate if the AOV is a good measurement or not:*
 
--   **Investigating the data set** : and Visually understand the data and Look for outliers.
+-   **Investigating the data set** : Visually understanding the data and look for (filter) outliers.
 
--   **Observe AOV vary in 30-days**
+-   **Observe how AOV vary in 30-days**
 
 -   **Try other metric:** Customer retention?
 
@@ -59,8 +59,6 @@ head(data)
 
 ### **Investigating the data set**
 
-#### Unit cost : Diensity Plot
-
 -   $$ \text{Calculate unit cost} = \frac{\text{Order Amount}}{\text{Total Items}}$$
 
 -   $$   \text{AOV} = \frac{\text{Summed Order Amount}}{\text{Number of Orders}}$$
@@ -71,11 +69,11 @@ AOV
 ```
 
 ```{r unit cost}
-data$unit_cost <- data$order_amount/ data$total_items
+data$unit_cost <- data$order_amount / data$total_items
 
 ```
 
-**Expectation**: I expect that the distribution of **unit_co**st is not skewed . My assumption is from the question **"the stores sell the same kind of sneakers**" .
+**Expectation**: I assume that the distribution of **unit_co**st is not skewed . My assumption is from the question **"the stores sell the same kind of sneakers**" .
 
 **Result:** The plot below proves that the shops are not selling the sneakers at the an normally distributed price. The plot is right skewed. This indicates presence of outliers in the data. I will plot a box plot to see these outliers in the different payment method.
 
@@ -83,12 +81,14 @@ data$unit_cost <- data$order_amount/ data$total_items
 data |>
    ggplot(aes(x= unit_cost)) +
   geom_density(color="darkblue", fill="lightblue") +
-  ggtitle('Distribution of Unit cost ')
+  ggtitle('Distribution of Unit cost ') +
+  ylab('Density') + 
+ xlab('Unit Cost of Sneakers')
 ```
 
 #### Box Plot : Payment Method
 
-Visually, there are outliers in the data. The box of the box plot are closer to the 0 unit cost.
+Visually, there are outliers in the data. The box of the boxplot are closer to \$0 unit cost.
 
 ```{r box-plot}
 
@@ -97,7 +97,16 @@ data |>
   geom_boxplot() + 
   ggtitle('Box plot of Payment types') + 
   xlab('Payment Types') + 
-  ylab('Unit COst of Sneakers')
+  ylab('Unit Cost of Sneakers')
+```
+
+**Most expensive Shop**
+
+The cost of a sneaker at **shop 78** is : **25,725 dollars.**
+
+```{r}
+data |> filter(unit_cost == max(unit_cost))
+
 ```
 
 #### Removing Outliers
@@ -108,16 +117,17 @@ paste0("NUmbers of Outliers: ",  length(outliers))
 data_out <- data[!(data$unit_cost %in% outliers), ]
 ```
 
-I will repeat the two plot to see if removing outliers has an effect on **unit cost**, hence effect on **AOV.**
+I will reproduce the two plot above to see if removing outliers has an effect on **unit cost**, hence have an effect on **AOV.**
 
-Observation: There peaks in the distributions. This could indicate different groups stores in the data. The boxplot looks great.
+**Observation**
+
+There are peaks in the distributions. This could indicate different groups in the shops. The boxplot looks great.
 
 ```{r no-outlier-density}
 data_out |>
    ggplot(aes(x= unit_cost)) +
   geom_density(color="darkblue", fill="lightblue") +
   ggtitle('Distribution of Unit cost: Without Outliers ') +
-
   ylab('Density') + 
  xlab('Unit Cost of Sneakers')
 ```
@@ -132,26 +142,26 @@ data_out |>
   ylab('Unit Cost of Sneakers')
 ```
 
-#### Calculate AOV after Outlier removal 
+#### Calculate AOV after Outlier removal
 
-The AOV drastically reduced from 3,145 to 300 dollars.
+The AOV drastically reduced from **\$3,145 to \$300 dollars.**
 
 ```{r no-outlier-aov}
 AOV_no_outlier <- sum(data_out$order_amount)/ nrow(data_out)
 AOV_no_outlier
 ```
 
-#### H**ow Does the AOV vary in 30-days**
+#### H**ow Does the AOV vary in 30-days?**
 
-In other to understand if AOV is a great metric; I will look at how it varied in during the month in two cases:
+In other to understand if AOV is a great metric; I will look at how it varied in the month in two cases:
 
--   Data with outlier : data
+-   **Data with outlier : data**
 
--   Data without outlier :data_out
+-   **Data without outlier :data_out**
 
-**Data with outlier : data**
+##### **Data with outlier : data**
 
-Te time series for the AOV shows a spike in sells for the Beginning and **end** of the month. For the rest of the month, the spike is somewhat consistent.
+The time series for the AOV shows a spike in sales for the Beginning and **end** of the month. For the rest of the month, the spike is somewhat consistent.
 
 ```{r time-seires-data}
 data$created_at <-as.Date(data$created_at)
@@ -171,21 +181,20 @@ aov_data_mth <- data |>
   ylab('Average Order Value')
 ```
 
-**Data with outlier : data_out**
+##### **Data with outlier : data_out**
 
-The time series for the AOV for the data without outlier shows a spike in AOV for the middle of the month. This is opposite of the first time series (one with outliers). In Beginning and **end** of the month, their is a decline ni AOV.
+The time series for the AOV for the data without outlier shows a spike in AOV for the middle of the month. This is opposite of the first time series (the one with outliers). In the **end** of the month, their is a decline in AOV and in the beginning of the month, AOV is small.
 
 ```{r time-seires-data-out}
 
 data_out$created_at <-as.Date(data_out$created_at)
-
 data_out$date <- as.Date(data_out$created_at, "%Y%m%d")
 
 aov_data_mth_out <- data_out |>
   group_by(created_at)|>
   summarize( aov = sum(order_amount)/n())
 
- ggplot(aov_data_mth_out, aes(x= created_at, y= aov)) +
+ ggplot(aov_data_mth_out, aes(x= created_at, y = aov)) +
   geom_line() + 
   xlab('Time Created') + 
   ggtitle('TIme Series AOV: Without Outliers') + 
@@ -193,34 +202,28 @@ aov_data_mth_out <- data_out |>
   ylab('Average Order Value')
 ```
 
+\
+
+#### Comments
+
 -   AOV only shows growth in a specific time period. This isn't a great metric. It' very possible that the outliers in the data are not as a result of data entry error. Some stores might be owned by a celebrity and people would love to buy from them. Hence the high order amount.
 
--   What Should matter to the store is if they are able to retain customers. Given the time period of the data set, it would be difficult to calculate customer retention.
+-   What should matter to the store is if they are able to retain customers. Given the time period of the data set, it would be difficult to calculate customer retention form scratch. I will be using a library called cohort.
 
 **General Retention Rate for all the Shops**
 
 ```{r cohort-analysis}
 
-retention <- function(data) {
+retention_data <- function(data) {
   cohort_days <- data %>%
   cohort_table_day(user_id, date)%>%
    shift_left_pct() %>%
    pivot_longer(-cohort) %>%
-   mutate(time = as.numeric(str_remove(name,"t")))
+   mutate(time = as.numeric(str_remove(name,'t')),
+          name = str_replace(name,'t', 'Day'))
 
    cohort_days[cohort_days == 0] <- NA
-
-  retention_plot <- cohort_days%>%
-  filter( time > 0, value > 0) %>%
-  ggplot(aes(time, value, color = cohort)) +
-  geom_line(size = 1) +
-  geom_point(size = 1) +
-  facet_wrap(~cohort) +
-  xlab('Days in March') +
-  ylab('z% Retention Rate ') +
-  ggtitle('Retention rate over Time')
-  
-  retention_plot
+   cohort_days
 }
 
 
@@ -230,28 +233,20 @@ retention <- function(data) {
 
 ```{r retention-all-shops}
 
-retention(data)
+data_cohort <- retention_data(data)
+data_cohort_out <- retention_data(data_out)
+
+data_cohort
+```
+
+Interpretation of visual isn't clear for the Cohort analysis
+
+```{r}
+ggplot(data_cohort, aes(x = as.factor(name), y = value, color = as.factor(cohort), group = cohort)) + geom_line() + geom_point()
 ```
 
 **Retention with Outliers**
 
-```{r}
-retention(data_out)
-```
+-   Conclusively, AOV is a good metric but it is easily affected by outliers.
 
-**Rention Rate for shop with the highest uni_cost**
-
-The cost of a sneaker at **shop 78** is : **25,725 dollars.**
-
-```{r}
-max_shop <-data |>
-  filter(unit_cost == min(unit_cost))
-
-max_shop
-```
-
-**Do they have an high retention rate?**
-
-```{r}
-retention(max_shop)
-```
+-   Customer retention is also a good metric to use when data has outliers.
