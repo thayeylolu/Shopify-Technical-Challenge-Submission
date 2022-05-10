@@ -197,29 +197,61 @@ aov_data_mth_out <- data_out |>
 
 -   What Should matter to the store is if they are able to retain customers. Given the time period of the data set, it would be difficult to calculate customer retention.
 
-General Cohort Analysis
+**General Retention Rate for all the Shops**
 
 ```{r cohort-analysis}
 
-cohort_days <- data %>%
+retention <- function(data) {
+  cohort_days <- data %>%
   cohort_table_day(user_id, date)%>%
-shift_left_pct() %>%
+   shift_left_pct() %>%
    pivot_longer(-cohort) %>%
    mutate(time = as.numeric(str_remove(name,"t")))
-cohort_days
-```
 
-```{r}
-cohort_days[cohort_days == 0] <- NA
+   cohort_days[cohort_days == 0] <- NA
 
-cohort_days%>%
-  filter(cohort <= 7, time > 0, value > 0) %>%
+  retention_plot <- cohort_days%>%
+  filter( time > 0, value > 0) %>%
   ggplot(aes(time, value, color = cohort)) +
   geom_line(size = 1) +
   geom_point(size = 1) +
   facet_wrap(~cohort) +
   xlab('Days in March') +
-  ylab('Retention Ratew in percent') +
+  ylab('z% Retention Rate ') +
   ggtitle('Retention rate over Time')
+  
+  retention_plot
+}
 
+
+```
+
+**Retention with Outliers**
+
+```{r retention-all-shops}
+
+retention(data)
+```
+
+**Retention with Outliers**
+
+```{r}
+retention(data_out)
+```
+
+**Rention Rate for shop with the highest uni_cost**
+
+The cost of a sneaker at **shop 78** is : **25,725 dollars.**
+
+```{r}
+max_shop <-data |>
+  filter(unit_cost == min(unit_cost))
+
+max_shop
+```
+
+**Do they have an high retention rate?**
+
+```{r}
+retention(max_shop)
 ```
