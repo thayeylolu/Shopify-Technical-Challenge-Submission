@@ -226,7 +226,6 @@ retention_data <- function(data) {
    cohort_days
 }
 
-
 ```
 
 **Retention with Outliers**
@@ -235,14 +234,13 @@ retention_data <- function(data) {
 
 data_cohort <- retention_data(data)
 data_cohort_out <- retention_data(data_out)
-
 data_cohort
 ```
 
-Interpretation of visual isn't clear for the Cohort analysis
+Interpretation of visual isn't clear for the Cohort analysis. I believe if the data spans more months, it will be easier to interpret the cohort analysis visual.
 
 ```{r}
-ggplot(data_cohort, aes(x = as.factor(name), y = value, color = as.factor(cohort), group = cohort)) + geom_line() + geom_point()
+ggplot(data_cohort, aes(x = as.factor(name), y = value, color = as.factor(cohort), group = cohort)) + geom_line() + geom_point() + ggtitle('Cohort Analysis for March')
 ```
 
 **Retention with Outliers**
