@@ -1,0 +1,165 @@
+---
+title: "Shopify  Data science Challenge"
+author: "Taiwo Owoseni"
+date: "May 19th 2022"
+output:
+  pdf_document: default
+  html_notebook: default
+subtitle: AOV 
+---
+
+### **Question**
+
+Given some sample data, write a program to answer the following:[click here to access the required data set](https://docs.google.com/spreadsheets/d/16i38oonuX1y1g7C_UAmiK9GkY7cS-64DfiDMNiR41LM/edit#gid=0)
+
+In Shopify, we have exactly 100 sneaker shops, and each of these shops sells only one model of shoe. We want to do some analysis of the average order value (AOV). When we look at orders data over a 30 day window, we naively calculate an AOV of \$3,145.13. Given that we know these shops are selling sneakers, a relatively affordable item, something seems wrong with our analysis. 
+
+1.  Think about what could be going wrong with our calculation. Think about a better way to evaluate this data. 
+
+2.  What metric would you report for this data set?
+
+3.  What is its value?
+
+### **Answer to Question :**
+
+1.  Presence of uutliers in the data set
+2.  AOV without outliers
+3.  AOV : \$299 dollars
+
+### Approach
+
+*Here are the list of steps I intend to use to evaluate if the AOV is a good measurement or not:*
+
+-   **Investigating the data set** : Visually understanding the data and look for (filter) outliers.
+
+-   **Observe how AOV vary with and without outliers**
+
+**Load Libraries and Data**
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+library(tools)
+library(scales)
+library(broom)
+library(MASS)
+library(rmarkdown)
+library(dplyr)
+library(MASS)
+library(ggrepel)
+library(binom)
+library(cohorts)
+library(lubridate)
+
+data <- read_csv("data/data.csv")
+
+```
+
+```{r view_data}
+head(data)
+```
+
+**Data Cleaning**
+
+Change the data type of some of the columns for easier manipulation
+
+```{r data cleaning}
+data <- data |>
+  mutate(order_id = as.factor(order_id))|>
+  mutate(shop_id = as.factor(shop_id))|>
+  mutate(user_id = as.factor(user_id))|>
+  mutate(payment_method = as.factor(payment_method))|>
+  mutate(created_at = as.Date(created_at))
+data
+```
+
+### **Investigating the data set**
+
+-   $$ \text{Calculate unit cost} = \frac{\text{Order Amount}}{\text{Total Items}}$$
+
+-   $$   \text{AOV} = \frac{\text{Summed Order Amount}}{\text{Number of Orders}}$$
+
+```{r naive-aov}
+AOV <- sum(data$order_amount)/ nrow(data)
+AOV
+```
+
+**Expectation**: I assume that the distribution of the AOV is not skewed . My assumption is from the question **"the stores sell the same kind of sneakers**" .
+
+**Plotting AOV per Shop**
+
+I am going to create the AOV per shop. The table below shows the aov in each shop.
+
+The AOV at **shops 42 and 78** is very high approximately **235, 101 dollars and 49,213 dollars respectively.**
+
+```{r}
+shop_aov <- data |>
+  group_by(shop_id = as.factor(shop_id))|>
+  summarise(aov =  sum(order_amount)/ n())|>
+  arrange(desc(aov))
+shop_aov
+ 
+```
+
+**Distribution of AOV**
+
+The plot below shows that most of the shops have a low AOV and few have high AOV. These are the little peaks at around 50,000 and above 200,000
+
+**Result:** The plot below proves that the shops are not selling the sneakers at a normally distributed price. The plot is right skewed. This indicates presence of outliers in the data.
+
+```{r aov-density}
+shop_aov |>
+   ggplot(aes(x= aov)) +
+  geom_density(color="darkblue", fill="lightblue") +
+  ggtitle('Distribution of AOV') +
+  ylab('Density') + 
+ xlab('AOV in Shops')
+```
+
+Next, I will remove the outliers in the data
+
+#### Removing Outliers
+
+```{r remove-outliers }
+outliers <- boxplot(shop_aov$aov, plot = FALSE)$out
+paste0("NUmbers of Outliers: ",  length(outliers))
+shop_aov_clean <- shop_aov[!(shop_aov$aov %in% outliers), ]
+#shop_aov_clean
+
+```
+
+I will reproduce the two plot above to see if removing outliers has an effect on **unit cost**, hence have an effect on **AOV.**
+
+**Observation**
+
+There are two peaks in the distributions. This could indicate two groups in the shops. Overall, this is a better distribution than the first
+
+```{r no-outlier-density}
+shop_aov_clean |>
+   ggplot(aes(x= aov)) +
+  geom_density(color="darkblue", fill="lightblue") +
+  ggtitle('Dernsity Distribution of AOV: Without Outliers ') +
+  ylab('Density') + 
+ xlab('AOV of Sneakers')
+```
+
+#### Calculate average AOV after Outlier removal
+
+The AOV drastically reduced from **\$3,145 to \$299.6 dollars.** AOV is easily affected by outliers. In this dataset, if outliers are removed, AOV would be a good metric
+
+```{r no-outlier-aov}
+AOV_no_outlier <- mean(shop_aov_clean$aov)
+AOV_no_outlier
+```
+
+**Answer to the Questions;**
+
+1.  
+
+#### Comments
+
+-   AOV is a good metric but sensitive to outliers. It's however possible that the outliers in the data are not as a result of data entry error. Some stores might be owned by a celebrity and people would love to buy from them. Hence the high order amount.
+
+-   What should matter to the store is if they are able to retain customers. Given the time period of the data set, it would be difficult to calculate customer retention form scratch.
